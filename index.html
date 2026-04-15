@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="RD en Cifras — Dashboard de datos económicos y sociales de República Dominicana en tiempo real">
+    <title>RD en Cifras — Datos de República Dominicana</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+</head>
+
+<body class="bg-[#0f0f14] text-white font-sans overflow-x-hidden">
+
+    <!-- ══════════════════════════════
+       NAV
+  ══════════════════════════════ -->
+    <nav class="nav-glass border-b border-[rgba(255,255,255,0.06)] sticky top-0 z-50">
+        <div class="max-w-[1400px] mx-auto px-6 h-[64px] flex items-center justify-between">
+
+            <a href="/" class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-[#6366f1] flex items-center justify-center font-bold text-[14px]">RD
+                </div>
+                <div>
+                    <span class="font-bold text-[17px] tracking-tight">RD en Cifras</span>
+                    <span class="hidden md:inline font-mono text-[11px] text-[rgba(255,255,255,0.4)] ml-2">República
+                        Dominicana</span>
+                </div>
+            </a>
+
+            <div class="hidden md:flex items-center gap-1">
+                <button onclick="irSeccion('economia')" class="nav-btn">Economía</button>
+                <button onclick="irSeccion('poblacion')" class="nav-btn">Población</button>
+                <button onclick="irSeccion('turismo')" class="nav-btn">Turismo</button>
+                <button onclick="irSeccion('social')" class="nav-btn">Social</button>
+                <button onclick="irSeccion('comercio')" class="nav-btn">Comercio</button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div
+                    class="hidden md:flex items-center gap-2 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] rounded-xl px-3 py-1.5">
+                    <span class="w-2 h-2 rounded-full bg-[#4ade80] live-dot"></span>
+                    <span class="font-mono text-[11px] text-[rgba(255,255,255,0.5)]">Datos en vivo</span>
+                </div>
+                <div class="hidden md:block">
+                    <select id="año-selector" onchange="cambiarAño(this.value)"
+                        class="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-1.5 font-mono text-[12px] text-white outline-none cursor-pointer">
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- ══════════════════════════════
+       HERO — KPIs PRINCIPALES
+  ══════════════════════════════ -->
+    <section class="px-6 py-10 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-[2rem]">🇩🇴</span>
+                    <div>
+                        <h1 class="text-[clamp(1.5rem,3vw,2.2rem)] font-extrabold tracking-tight">República Dominicana
+                            en Cifras</h1>
+                        <p class="font-mono text-[12px] text-[rgba(255,255,255,0.4)] mt-0.5">Datos económicos y sociales
+                            reales · Fuente: Banco Mundial</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="kpis-grid">
+                <div class="kpi-card skeleton-dark rounded-2xl p-5 h-[110px]"></div>
+                <div class="kpi-card skeleton-dark rounded-2xl p-5 h-[110px]"></div>
+                <div class="kpi-card skeleton-dark rounded-2xl p-5 h-[110px]"></div>
+                <div class="kpi-card skeleton-dark rounded-2xl p-5 h-[110px]"></div>
+                <div class="kpi-card skeleton-dark rounded-2xl p-5 h-[110px]"></div>
+                <div class="kpi-card skeleton-dark rounded-2xl p-5 h-[110px]"></div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       ECONOMÍA
+  ══════════════════════════════ -->
+    <section id="economia" class="px-6 py-12 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="section-header mb-8">
+                <span class="section-tag">📈 Economía</span>
+                <h2 class="section-title">Crecimiento económico</h2>
+                <p class="section-desc">PIB, inflación e inversión extranjera directa</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">PIB — Producto Interno Bruto</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">En miles de millones
+                                USD</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-pib" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Crecimiento del PIB</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">Variación % anual</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-crecimiento" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Inflación</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">Índice de precios al
+                                consumidor %</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-inflacion" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Inversión Extranjera Directa</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">Millones USD</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-ied" height="220"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       POBLACIÓN
+  ══════════════════════════════ -->
+    <section id="poblacion" class="px-6 py-12 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="section-header mb-8">
+                <span class="section-tag">👥 Población</span>
+                <h2 class="section-title">Demografía</h2>
+                <p class="section-desc">Población total, crecimiento y distribución</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <div class="chart-card rounded-2xl p-6 lg:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Población total</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">En millones de
+                                habitantes</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-poblacion" height="200"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[15px] font-bold text-white">Distribución urbana vs rural</h3>
+                    </div>
+                    <canvas id="chart-urbano" height="200"></canvas>
+                    <div class="flex gap-4 mt-4 justify-center">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-[#6366f1]"></span>
+                            <span class="font-mono text-[11px] text-[rgba(255,255,255,0.5)]">Urbana</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-[#22d3ee]"></span>
+                            <span class="font-mono text-[11px] text-[rgba(255,255,255,0.5)]">Rural</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       TURISMO
+  ══════════════════════════════ -->
+    <section id="turismo" class="px-6 py-12 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="section-header mb-8">
+                <span class="section-tag">✈️ Turismo</span>
+                <h2 class="section-title">Industria turística</h2>
+                <p class="section-desc">Principal motor económico de RD</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Llegadas de turistas</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">Millones de visitantes
+                                anuales</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-turistas" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Ingresos por turismo</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">Millones USD</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-ingresos-turismo" height="220"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       SOCIAL
+  ══════════════════════════════ -->
+    <section id="social" class="px-6 py-12 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="section-header mb-8">
+                <span class="section-tag">🏥 Social</span>
+                <h2 class="section-title">Indicadores sociales</h2>
+                <p class="section-desc">Salud, educación y calidad de vida</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[15px] font-bold text-white">Esperanza de vida</h3>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-vida" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[15px] font-bold text-white">Tasa de desempleo</h3>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-desempleo" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[15px] font-bold text-white">Gasto en educación</h3>
+                        <span class="chart-badge">% del PIB</span>
+                    </div>
+                    <canvas id="chart-educacion" height="220"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       COMERCIO
+  ══════════════════════════════ -->
+    <section id="comercio" class="px-6 py-12 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="section-header mb-8">
+                <span class="section-tag">🌍 Comercio</span>
+                <h2 class="section-title">Comercio exterior</h2>
+                <p class="section-desc">Exportaciones, importaciones y balanza comercial</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Exportaciones vs Importaciones</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">% del PIB</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-comercio" height="220"></canvas>
+                </div>
+
+                <div class="chart-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[15px] font-bold text-white">Remesas recibidas</h3>
+                            <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">Millones USD · Diáspora
+                                dominicana</p>
+                        </div>
+                        <span class="chart-badge">Banco Mundial</span>
+                    </div>
+                    <canvas id="chart-remesas" height="220"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       COMPARATIVA CARIBE
+  ══════════════════════════════ -->
+    <section class="px-6 py-12 border-b border-[rgba(255,255,255,0.06)]">
+        <div class="max-w-[1400px] mx-auto">
+
+            <div class="section-header mb-8">
+                <span class="section-tag">🌎 Comparativa</span>
+                <h2 class="section-title">RD vs El Caribe</h2>
+                <p class="section-desc">República Dominicana comparada con sus vecinos</p>
+            </div>
+
+            <div class="chart-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-[15px] font-bold text-white">PIB per cápita — Países del Caribe</h3>
+                        <p class="font-mono text-[11px] text-[rgba(255,255,255,0.4)] mt-0.5">USD · Último año disponible
+                        </p>
+                    </div>
+                    <span class="chart-badge">Banco Mundial</span>
+                </div>
+                <canvas id="chart-caribe" height="140"></canvas>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+       FOOTER
+  ══════════════════════════════ -->
+    <footer class="border-t border-[rgba(255,255,255,0.06)] px-6 py-10">
+        <div class="max-w-[1400px] mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div
+                            class="w-9 h-9 rounded-xl bg-[#6366f1] flex items-center justify-center font-bold text-[14px]">
+                            RD</div>
+                        <span class="font-bold text-[18px]">RD en Cifras</span>
+                    </div>
+                    <p class="text-[13px] text-[rgba(255,255,255,0.4)] leading-relaxed">
+                        Dashboard de datos económicos y sociales de República Dominicana. Datos reales del Banco
+                        Mundial.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-mono text-[11px] tracking-widest uppercase text-[rgba(255,255,255,0.3)] mb-4">
+                        Secciones</h4>
+                    <ul class="space-y-2">
+                        <li><button onclick="irSeccion('economia')"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Economía</button>
+                        </li>
+                        <li><button onclick="irSeccion('poblacion')"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Población</button>
+                        </li>
+                        <li><button onclick="irSeccion('turismo')"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Turismo</button>
+                        </li>
+                        <li><button onclick="irSeccion('social')"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Social</button>
+                        </li>
+                        <li><button onclick="irSeccion('comercio')"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Comercio</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-mono text-[11px] tracking-widest uppercase text-[rgba(255,255,255,0.3)] mb-4">
+                        Fuentes de datos</h4>
+                    <ul class="space-y-2">
+                        <li><a href="https://data.worldbank.org" target="_blank"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Banco
+                                Mundial</a></li>
+                        <li><a href="https://datos.gob.do" target="_blank"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">Datos
+                                Abiertos RD</a></li>
+                        <li><a href="https://www.cepal.org" target="_blank"
+                                class="text-[13px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors">CEPAL</a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div
+                class="flex flex-col md:flex-row justify-between items-center gap-3 pt-6 border-t border-[rgba(255,255,255,0.06)]">
+                <p class="font-mono text-[11px] text-[rgba(255,255,255,0.2)]">© 2025 RD en Cifras · Datos: Banco Mundial
+                    API</p>
+                <p class="font-mono text-[11px] text-[rgba(255,255,255,0.2)]">
+                    Hecho por <a href="#" class="hover:text-white transition-colors">Solcraft · Ángel David</a>
+                </p>
+            </div>
+
+        </div>
+    </footer>
+
+    <script src="assets/js/datos.js"></script>
+    <script src="assets/js/graficas.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+
+</html>
