@@ -66,7 +66,7 @@ async function fetchCaribe() {
         .sort((a, b) => b.valor - a.valor);
 }
 
-// ── FETCH TODOS LOS DATOS ─────────────────────────────────────
+// ── FETCH CARIBE ──────────────────────────────────────────────
 async function fetchCaribe() {
     const paises = [
         { code: 'DO', nombre: 'Rep. Dominicana' },
@@ -83,14 +83,9 @@ async function fetchCaribe() {
             fetch(`https://api.worldbank.org/v2/country/${p.code}/indicator/NY.GDP.PCAP.CD?format=json&mrv=5`)
                 .then(r => r.json())
                 .then(data => {
-                    // Buscar el primer valor no nulo en los últimos 5 años
                     const items = data[1] || [];
                     const item = items.find(i => i.value !== null);
-                    return {
-                        nombre: p.nombre,
-                        valor: item?.value || 0,
-                        code: p.code,
-                    };
+                    return { nombre: p.nombre, valor: item?.value || 0, code: p.code };
                 })
         )
     );
@@ -99,6 +94,43 @@ async function fetchCaribe() {
         .filter(r => r.status === 'fulfilled' && r.value.valor > 0)
         .map(r => r.value)
         .sort((a, b) => b.valor - a.valor);
+}
+
+// ── FETCH TODOS LOS DATOS ─────────────────────────────────────
+async function fetchTodosLosDatos() {
+    const [
+        pib, crecimiento, pibPC, inflacion,
+        poblacion, urbana, turistas, turismoDolares,
+        esperanza, desempleo, educacion,
+        exportaciones, importaciones, remesas, ied,
+        caribe
+    ] = await Promise.all([
+        fetchIndicador(INDICADORES.pib),
+        fetchIndicador(INDICADORES.crecimiento),
+        fetchIndicador(INDICADORES.pibPerCapita),
+        fetchIndicador(INDICADORES.inflacion),
+        fetchIndicador(INDICADORES.poblacion),
+        fetchIndicador(INDICADORES.urbana),
+        fetchIndicador(INDICADORES.turistas),
+        fetchIndicador(INDICADORES['turismo$']),
+        fetchIndicador(INDICADORES.esperanza),
+        fetchIndicador(INDICADORES.desempleo),
+        fetchIndicador(INDICADORES.educacion),
+        fetchIndicador(INDICADORES.exportaciones),
+        fetchIndicador(INDICADORES.importaciones),
+        fetchIndicador(INDICADORES.remesas),
+        fetchIndicador(INDICADORES.ied),
+        fetchCaribe(),
+    ]);
+
+    return {
+        pib, crecimiento, pibPC, inflacion,
+        poblacion, urbana, turistas,
+        'turismo$': turismoDolares,
+        esperanza, desempleo, educacion,
+        exportaciones, importaciones, remesas, ied,
+        caribe,
+    };
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
