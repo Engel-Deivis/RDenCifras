@@ -67,39 +67,38 @@ async function fetchCaribe() {
 }
 
 // ── FETCH TODOS LOS DATOS ─────────────────────────────────────
-async function fetchTodosLosDatos() {
-    const [
-        pib, crecimiento, pibPC, inflacion,
-        poblacion, urbana, turistas, turismo$,
-        esperanza, desempleo, educacion,
-        exportaciones, importaciones, remesas, ied,
-        caribe
-    ] = await Promise.all([
-        fetchIndicador(INDICADORES.pib),
-        fetchIndicador(INDICADORES.crecimiento),
-        fetchIndicador(INDICADORES.pibPerCapita),
-        fetchIndicador(INDICADORES.inflacion),
-        fetchIndicador(INDICADORES.poblacion),
-        fetchIndicador(INDICADORES.urbana),
-        fetchIndicador(INDICADORES.turistas),
-        fetchIndicador(INDICADORES['turismo$']),
-        fetchIndicador(INDICADORES.esperanza),
-        fetchIndicador(INDICADORES.desempleo),
-        fetchIndicador(INDICADORES.educacion),
-        fetchIndicador(INDICADORES.exportaciones),
-        fetchIndicador(INDICADORES.importaciones),
-        fetchIndicador(INDICADORES.remesas),
-        fetchIndicador(INDICADORES.ied),
-        fetchCaribe(),
-    ]);
+async function fetchCaribe() {
+    const paises = [
+        { code: 'DO', nombre: 'Rep. Dominicana' },
+        { code: 'CU', nombre: 'Cuba' },
+        { code: 'HT', nombre: 'Haití' },
+        { code: 'JM', nombre: 'Jamaica' },
+        { code: 'TT', nombre: 'Trinidad y Tobago' },
+        { code: 'PA', nombre: 'Panamá' },
+        { code: 'CR', nombre: 'Costa Rica' },
+    ];
 
-    return {
-        pib, crecimiento, pibPC, inflacion,
-        poblacion, urbana, turistas, turismo$,
-        esperanza, desempleo, educacion,
-        exportaciones, importaciones, remesas, ied,
-        caribe,
-    };
+    const resultados = await Promise.allSettled(
+        paises.map(p =>
+            fetch(`https://api.worldbank.org/v2/country/${p.code}/indicator/NY.GDP.PCAP.CD?format=json&mrv=5`)
+                .then(r => r.json())
+                .then(data => {
+                    // Buscar el primer valor no nulo en los últimos 5 años
+                    const items = data[1] || [];
+                    const item = items.find(i => i.value !== null);
+                    return {
+                        nombre: p.nombre,
+                        valor: item?.value || 0,
+                        code: p.code,
+                    };
+                })
+        )
+    );
+
+    return resultados
+        .filter(r => r.status === 'fulfilled' && r.value.valor > 0)
+        .map(r => r.value)
+        .sort((a, b) => b.valor - a.valor);
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
